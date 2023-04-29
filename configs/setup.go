@@ -29,7 +29,7 @@ func ConnectDB() *mongo.Client  {
     if err != nil {
         log.Fatal(err)
     }
-	
+
     fmt.Println("Connected to MongoDB")
     return client
 }
@@ -39,6 +39,6 @@ var DB *mongo.Client = ConnectDB()
 
 //getting database collections
 func GetCollection(client *mongo.Client, collectionName string) *mongo.Collection {
-    collection := client.Database("golangAPI").Collection(collectionName)
+    collection := client.Database("cluster0").Collection(collectionName)
     return collection
 }
