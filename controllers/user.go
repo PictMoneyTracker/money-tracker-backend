@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"money-tracker/configs"
 	"money-tracker/models"
 	S "money-tracker/services"
 
@@ -10,10 +9,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var userCollection *mongo.Collection = configs.GetCollection(configs.DB, "user")
 var validate = validator.New()
 
 func CreateUser(c *fiber.Ctx) error {
@@ -35,7 +32,7 @@ func CreateUser(c *fiber.Ctx) error {
 
 	user.Id = primitive.NewObjectID()
 
-	newUser, e := S.CreateUser(&user, userCollection)
+	newUser, e := S.CreateUser(&user)
 
 	if e != nil {
 		return c.Status(http.StatusInternalServerError).JSON(
@@ -48,4 +45,23 @@ func CreateUser(c *fiber.Ctx) error {
 		models.Response{Status: http.StatusCreated,
 			Message: "success",
 			Data:    &fiber.Map{"Id": newUser.Id}})
+}
+
+func GetUser(c *fiber.Ctx) error {
+	
+	userId := c.Params("userId")
+
+	user, e := S.GetUser(userId)
+
+	if e != nil {
+		return c.Status(http.StatusInternalServerError).JSON(
+			models.Response{Status: http.StatusInternalServerError,
+				Message: "error",
+				Data:    &fiber.Map{"data": e.Error()}})
+	}
+
+	return c.Status(http.StatusOK).JSON(
+		models.Response{Status: http.StatusOK,
+			Message: "success",
+			Data:    &fiber.Map{"user": user}})
 }
