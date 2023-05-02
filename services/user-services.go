@@ -35,3 +35,46 @@ func GetUser(userId string) (*models.User, error) {
 	}
 	return &user, nil
 }
+
+// todo: update user
+func UpdateUser(userId string, user *models.User) (int64, error) {
+	dbCtx := context.Background()
+
+	foundUser, err := GetUser(userId)
+
+	if err != nil {
+		return 0, err
+	}
+
+	// patch user 
+	if user.Email != "" {
+		foundUser.Email = user.Email
+	}
+	if user.Name != "" {
+		foundUser.Name = user.Name
+	}
+	if user.PhotoUrl != "" {
+		foundUser.PhotoUrl = user.PhotoUrl
+	}
+	if user.StipendTotal != 0 {
+		foundUser.StipendTotal = user.StipendTotal
+	}
+	if user.StockTotal != 0 {
+		foundUser.StockTotal = user.StockTotal
+	}
+	if user.AllowanceTotal != 0 {
+		foundUser.AllowanceTotal = user.AllowanceTotal
+	}
+
+	res, err := userCollection.UpdateOne(dbCtx, bson.M{"id": foundUser.Id}, bson.M{"$set": foundUser})
+
+	if err != nil {
+		return 0, err
+	}
+
+	if res.ModifiedCount == 0 {
+		return 0, nil
+	}
+
+	return res.MatchedCount, nil
+}
