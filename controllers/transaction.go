@@ -3,20 +3,20 @@ package controllers
 import (
 	"money-tracker/models"
 	S "money-tracker/services"
+	"time"
 
 	"net/http"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-var validate = validator.New()
+func AddTransaction(c *fiber.Ctx) error {
 
-func CreateUser(c *fiber.Ctx) error {
+	var transaction models.Transaction
+	userId := c.Params("userId")
 
-	var user models.User
-	if err := c.BodyParser(&user); err != nil {
+	if err := c.BodyParser(&transaction); err != nil {
 		return c.Status(
 			http.StatusBadRequest).JSON(
 			models.Response{
@@ -27,7 +27,7 @@ func CreateUser(c *fiber.Ctx) error {
 		)
 	}
 
-	if validationErr := validate.Struct(user); validationErr != nil {
+	if validationErr := validate.Struct(transaction); validationErr != nil {
 		return c.Status(
 			http.StatusBadRequest).JSON(
 			models.Response{
@@ -38,9 +38,24 @@ func CreateUser(c *fiber.Ctx) error {
 		)
 	}
 
-	user.Id = primitive.NewObjectID()
+	transaction.Id = primitive.NewObjectID()
+	trxUserId, err := primitive.ObjectIDFromHex(userId)
+	transaction.CreatedAt = time.Now()
 
-	newUser, e := S.CreateUser(&user)
+	if err != nil {
+		return c.Status(
+			http.StatusBadRequest).JSON(
+			models.Response{
+				Status:  http.StatusBadRequest,
+				Message: "error",
+				Data:    err.Error(),
+			},
+		)
+	}
+
+	transaction.UserId = trxUserId
+
+	newTransaction, e := S.AddTransaction(userId, &transaction)
 
 	if e != nil {
 		return c.Status(
@@ -58,24 +73,24 @@ func CreateUser(c *fiber.Ctx) error {
 		models.Response{
 			Status:  http.StatusCreated,
 			Message: "success",
-			Data:    &fiber.Map{"Id": newUser.Id},
+			Data:    &fiber.Map{"Id": newTransaction.Id},
 		},
 	)
 }
 
-func GetUser(c *fiber.Ctx) error {
+func GetTransactions(c *fiber.Ctx) error {
 
 	userId := c.Params("userId")
 
-	user, e := S.GetUser(userId)
+	transactions, err := S.GetTransactions(userId)
 
-	if e != nil {
+	if err != nil {
 		return c.Status(
 			http.StatusInternalServerError).JSON(
 			models.Response{
 				Status:  http.StatusInternalServerError,
 				Message: "error",
-				Data:    e.Error(),
+				Data:    err.Error(),
 			},
 		)
 	}
@@ -85,17 +100,47 @@ func GetUser(c *fiber.Ctx) error {
 		models.Response{
 			Status:  http.StatusOK,
 			Message: "success",
-			Data:    &fiber.Map{"user": user},
+			Data:    transactions,
 		},
 	)
 }
 
-func UpdateUser(c *fiber.Ctx) error {
+func DeleteTransaction(c *fiber.Ctx) error {
 
 	userId := c.Params("userId")
+	transactionId := c.Params("transactionId")
 
-	var user models.User
-	if err := c.BodyParser(&user); err != nil {
+	delCnt, err := S.DeleteTransaction(userId, transactionId)
+
+	if err != nil {
+		return c.Status(
+			http.StatusInternalServerError).JSON(
+			models.Response{
+				Status:  http.StatusInternalServerError,
+				Message: "error",
+				Data:    err.Error(),
+			},
+		)
+	}
+
+	return c.Status(
+		http.StatusOK).JSON(
+		models.Response{
+			Status:  http.StatusOK,
+			Message: "success",
+			Data:    &fiber.Map{"deletedCount": delCnt},
+		},
+	)
+}
+
+func UpdateTransaction(c *fiber.Ctx) error {
+
+	userId := c.Params("userId")
+	transactionId := c.Params("transactionId")
+
+	var transaction models.Transaction
+
+	if err := c.BodyParser(&transaction); err != nil {
 		return c.Status(
 			http.StatusBadRequest).JSON(
 			models.Response{
@@ -106,7 +151,7 @@ func UpdateUser(c *fiber.Ctx) error {
 		)
 	}
 
-	if validationErr := validate.Struct(user); validationErr != nil {
+	if validationErr := validate.Struct(transaction); validationErr != nil {
 		return c.Status(
 			http.StatusBadRequest).JSON(
 			models.Response{
@@ -117,15 +162,15 @@ func UpdateUser(c *fiber.Ctx) error {
 		)
 	}
 
-	modifiedCount, e := S.UpdateUser(userId, &user)
+	updCnt, err := S.UpdateTransaction(userId, transactionId, &transaction)
 
-	if e != nil {
+	if err != nil {
 		return c.Status(
 			http.StatusInternalServerError).JSON(
 			models.Response{
 				Status:  http.StatusInternalServerError,
 				Message: "error",
-				Data:    e.Error(),
+				Data:    err.Error(),
 			},
 		)
 	}
@@ -135,7 +180,7 @@ func UpdateUser(c *fiber.Ctx) error {
 		models.Response{
 			Status:  http.StatusOK,
 			Message: "success",
-			Data:    &fiber.Map{"count": modifiedCount},
+			Data:    &fiber.Map{"Transaction": updCnt},
 		},
 	)
 }

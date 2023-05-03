@@ -3,20 +3,19 @@ package controllers
 import (
 	"money-tracker/models"
 	S "money-tracker/services"
-
 	"net/http"
+	"strconv"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-var validate = validator.New()
+func AddStock(c *fiber.Ctx) error {
 
-func CreateUser(c *fiber.Ctx) error {
+	userId := c.Params("userId")
 
-	var user models.User
-	if err := c.BodyParser(&user); err != nil {
+	var stock models.Stock
+
+	if err := c.BodyParser(&stock); err != nil {
 		return c.Status(
 			http.StatusBadRequest).JSON(
 			models.Response{
@@ -27,7 +26,7 @@ func CreateUser(c *fiber.Ctx) error {
 		)
 	}
 
-	if validationErr := validate.Struct(user); validationErr != nil {
+	if validationErr := validate.Struct(stock); validationErr != nil {
 		return c.Status(
 			http.StatusBadRequest).JSON(
 			models.Response{
@@ -38,9 +37,7 @@ func CreateUser(c *fiber.Ctx) error {
 		)
 	}
 
-	user.Id = primitive.NewObjectID()
-
-	newUser, e := S.CreateUser(&user)
+	newStock, e := S.AddStock(userId, &stock)
 
 	if e != nil {
 		return c.Status(
@@ -58,16 +55,17 @@ func CreateUser(c *fiber.Ctx) error {
 		models.Response{
 			Status:  http.StatusCreated,
 			Message: "success",
-			Data:    &fiber.Map{"Id": newUser.Id},
+			Data:    &fiber.Map{"Id": newStock.Id},
 		},
 	)
+
 }
 
-func GetUser(c *fiber.Ctx) error {
-
+func GetStocks(c *fiber.Ctx) error {
+	
 	userId := c.Params("userId")
 
-	user, e := S.GetUser(userId)
+	stocks, e := S.GetStocks(userId)
 
 	if e != nil {
 		return c.Status(
@@ -85,17 +83,19 @@ func GetUser(c *fiber.Ctx) error {
 		models.Response{
 			Status:  http.StatusOK,
 			Message: "success",
-			Data:    &fiber.Map{"user": user},
+			Data:    stocks,
 		},
 	)
+
 }
 
-func UpdateUser(c *fiber.Ctx) error {
-
+func DeleteStock(c *fiber.Ctx) error {
+	
 	userId := c.Params("userId")
+	stockIdStr := c.Params("stockId")
+	stockId, err := strconv.ParseInt(stockIdStr, 10, 32)
 
-	var user models.User
-	if err := c.BodyParser(&user); err != nil {
+	if err != nil {
 		return c.Status(
 			http.StatusBadRequest).JSON(
 			models.Response{
@@ -106,18 +106,7 @@ func UpdateUser(c *fiber.Ctx) error {
 		)
 	}
 
-	if validationErr := validate.Struct(user); validationErr != nil {
-		return c.Status(
-			http.StatusBadRequest).JSON(
-			models.Response{
-				Status:  http.StatusBadRequest,
-				Message: "error",
-				Data:    validationErr.Error(),
-			},
-		)
-	}
-
-	modifiedCount, e := S.UpdateUser(userId, &user)
+	deletedStockId, e := S.DeleteStock(userId, int32(stockId))
 
 	if e != nil {
 		return c.Status(
@@ -135,7 +124,8 @@ func UpdateUser(c *fiber.Ctx) error {
 		models.Response{
 			Status:  http.StatusOK,
 			Message: "success",
-			Data:    &fiber.Map{"count": modifiedCount},
+			Data:    &fiber.Map{"Id": deletedStockId},
 		},
 	)
+
 }
