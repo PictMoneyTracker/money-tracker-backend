@@ -9,4 +9,7 @@ import (
 func StockRoute(app *fiber.App) {
 	app.Post("/stock/:userId", controllers.AddStock)
 
+	app.Get("/stock/:userId", controllers.GetStocks)
+
+	app.Delete("/stock/:userId/:stockId", controllers.DeleteStock)
 }
