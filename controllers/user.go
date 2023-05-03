@@ -17,17 +17,25 @@ func CreateUser(c *fiber.Ctx) error {
 
 	var user models.User
 	if err := c.BodyParser(&user); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(
-			models.Response{Status: http.StatusBadRequest,
+		return c.Status(
+			http.StatusBadRequest).JSON(
+			models.Response{
+				Status:  http.StatusBadRequest,
 				Message: "error",
-				Data:    &fiber.Map{"data": err.Error()}})
+				Data:    err.Error(),
+			},
+		)
 	}
 
 	if validationErr := validate.Struct(user); validationErr != nil {
-		return c.Status(http.StatusBadRequest).JSON(
-			models.Response{Status: http.StatusBadRequest,
+		return c.Status(
+			http.StatusBadRequest).JSON(
+			models.Response{
+				Status:  http.StatusBadRequest,
 				Message: "error",
-				Data:    &fiber.Map{"data": validationErr.Error()}})
+				Data:    validationErr.Error(),
+			},
+		)
 	}
 
 	user.Id = primitive.NewObjectID()
@@ -35,35 +43,51 @@ func CreateUser(c *fiber.Ctx) error {
 	newUser, e := S.CreateUser(&user)
 
 	if e != nil {
-		return c.Status(http.StatusInternalServerError).JSON(
-			models.Response{Status: http.StatusInternalServerError,
+		return c.Status(
+			http.StatusInternalServerError).JSON(
+			models.Response{
+				Status:  http.StatusInternalServerError,
 				Message: "error",
-				Data:    &fiber.Map{"data": e.Error()}})
+				Data:    e.Error(),
+			},
+		)
 	}
 
-	return c.Status(http.StatusCreated).JSON(
-		models.Response{Status: http.StatusCreated,
+	return c.Status(
+		http.StatusCreated).JSON(
+		models.Response{
+			Status:  http.StatusCreated,
 			Message: "success",
-			Data:    &fiber.Map{"Id": newUser.Id}})
+			Data:    &fiber.Map{"Id": newUser.Id},
+		},
+	)
 }
 
 func GetUser(c *fiber.Ctx) error {
-	
+
 	userId := c.Params("userId")
 
 	user, e := S.GetUser(userId)
 
 	if e != nil {
-		return c.Status(http.StatusInternalServerError).JSON(
-			models.Response{Status: http.StatusInternalServerError,
+		return c.Status(
+			http.StatusInternalServerError).JSON(
+			models.Response{
+				Status:  http.StatusInternalServerError,
 				Message: "error",
-				Data:    &fiber.Map{"data": e.Error()}})
+				Data:    e.Error(),
+			},
+		)
 	}
 
-	return c.Status(http.StatusOK).JSON(
-		models.Response{Status: http.StatusOK,
+	return c.Status(
+		http.StatusOK).JSON(
+		models.Response{
+			Status:  http.StatusOK,
 			Message: "success",
-			Data:    &fiber.Map{"user": user}})
+			Data:    &fiber.Map{"user": user},
+		},
+	)
 }
 
 func UpdateUser(c *fiber.Ctx) error {
@@ -72,30 +96,46 @@ func UpdateUser(c *fiber.Ctx) error {
 
 	var user models.User
 	if err := c.BodyParser(&user); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(
-			models.Response{Status: http.StatusBadRequest,
+		return c.Status(
+			http.StatusBadRequest).JSON(
+			models.Response{
+				Status:  http.StatusBadRequest,
 				Message: "error",
-				Data:    &fiber.Map{"data": err.Error()}})
+				Data:    err.Error(),
+			},
+		)
 	}
 
 	if validationErr := validate.Struct(user); validationErr != nil {
-		return c.Status(http.StatusBadRequest).JSON(
-			models.Response{Status: http.StatusBadRequest,
+		return c.Status(
+			http.StatusBadRequest).JSON(
+			models.Response{
+				Status:  http.StatusBadRequest,
 				Message: "error",
-				Data:    &fiber.Map{"data": validationErr.Error()}})
+				Data:    validationErr.Error(),
+			},
+		)
 	}
 
 	modifiedCount, e := S.UpdateUser(userId, &user)
 
 	if e != nil {
-		return c.Status(http.StatusInternalServerError).JSON(
-			models.Response{Status: http.StatusInternalServerError,
+		return c.Status(
+			http.StatusInternalServerError).JSON(
+			models.Response{
+				Status:  http.StatusInternalServerError,
 				Message: "error",
-				Data:    &fiber.Map{"data": e.Error()}})
+				Data:    e.Error(),
+			},
+		)
 	}
 
-	return c.Status(http.StatusOK).JSON(
-		models.Response{Status: http.StatusOK,
+	return c.Status(
+		http.StatusOK).JSON(
+		models.Response{
+			Status:  http.StatusOK,
 			Message: "success",
-			Data:    &fiber.Map{"count": modifiedCount}})
+			Data:    &fiber.Map{"count": modifiedCount},
+		},
+	)
 }
