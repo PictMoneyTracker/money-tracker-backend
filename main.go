@@ -12,8 +12,7 @@ func main() {
 
 	configs.ConnectDB()
 
-	routes.UserRoute(app)
-	routes.StockRoute(app)
+	routes.InitRoutes(app)
 
 	app.Listen(":6969")
 }
