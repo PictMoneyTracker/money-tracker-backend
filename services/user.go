@@ -15,6 +15,15 @@ var userCollection *mongo.Collection = configs.GetCollection(configs.DB, "user")
 func CreateUser(user *models.User) (*models.User, error) {
 	dbCtx := context.Background()
 
+	// index := mongo.IndexModel{
+	// 	Keys:    bson.M{"email": 1},
+	// 	Options: options.Index().SetUnique(true),
+	// }
+	// _, err := userCollection.Indexes().CreateOne(context.Background(), index)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
 	_, err := userCollection.InsertOne(dbCtx, user)
 	if err != nil {
 		return nil, err
@@ -46,7 +55,7 @@ func UpdateUser(userId string, user *models.User) (int64, error) {
 		return 0, err
 	}
 
-	// patch user 
+	// patch user
 	if user.Email != "" {
 		foundUser.Email = user.Email
 	}
