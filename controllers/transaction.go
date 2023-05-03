@@ -76,5 +76,111 @@ func AddTransaction(c *fiber.Ctx) error {
 			Data:    &fiber.Map{"Id": newTransaction.Id},
 		},
 	)
+}
 
+func GetTransactions(c *fiber.Ctx) error {
+
+	userId := c.Params("userId")
+
+	transactions, err := S.GetTransactions(userId)
+
+	if err != nil {
+		return c.Status(
+			http.StatusInternalServerError).JSON(
+			models.Response{
+				Status:  http.StatusInternalServerError,
+				Message: "error",
+				Data:    err.Error(),
+			},
+		)
+	}
+
+	return c.Status(
+		http.StatusOK).JSON(
+		models.Response{
+			Status:  http.StatusOK,
+			Message: "success",
+			Data:    transactions,
+		},
+	)
+}
+
+func DeleteTransaction(c *fiber.Ctx) error {
+
+	userId := c.Params("userId")
+	transactionId := c.Params("transactionId")
+
+	delCnt, err := S.DeleteTransaction(userId, transactionId)
+
+	if err != nil {
+		return c.Status(
+			http.StatusInternalServerError).JSON(
+			models.Response{
+				Status:  http.StatusInternalServerError,
+				Message: "error",
+				Data:    err.Error(),
+			},
+		)
+	}
+
+	return c.Status(
+		http.StatusOK).JSON(
+		models.Response{
+			Status:  http.StatusOK,
+			Message: "success",
+			Data:    &fiber.Map{"deletedCount": delCnt},
+		},
+	)
+}
+
+func UpdateTransaction(c *fiber.Ctx) error {
+
+	userId := c.Params("userId")
+	transactionId := c.Params("transactionId")
+
+	var transaction models.Transaction
+
+	if err := c.BodyParser(&transaction); err != nil {
+		return c.Status(
+			http.StatusBadRequest).JSON(
+			models.Response{
+				Status:  http.StatusBadRequest,
+				Message: "error",
+				Data:    err.Error(),
+			},
+		)
+	}
+
+	if validationErr := validate.Struct(transaction); validationErr != nil {
+		return c.Status(
+			http.StatusBadRequest).JSON(
+			models.Response{
+				Status:  http.StatusBadRequest,
+				Message: "error",
+				Data:    validationErr.Error(),
+			},
+		)
+	}
+
+	updCnt, err := S.UpdateTransaction(userId, transactionId, &transaction)
+
+	if err != nil {
+		return c.Status(
+			http.StatusInternalServerError).JSON(
+			models.Response{
+				Status:  http.StatusInternalServerError,
+				Message: "error",
+				Data:    err.Error(),
+			},
+		)
+	}
+
+	return c.Status(
+		http.StatusOK).JSON(
+		models.Response{
+			Status:  http.StatusOK,
+			Message: "success",
+			Data:    &fiber.Map{"Transaction": updCnt},
+		},
+	)
 }
