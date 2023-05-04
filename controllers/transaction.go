@@ -105,6 +105,35 @@ func GetTransactions(c *fiber.Ctx) error {
 	)
 }
 
+func GetTransaction(c *fiber.Ctx) error {
+
+	userId := c.Params("userId")
+
+	transactionId := c.Params("transactionId")
+
+	transaction, err := S.GetTransaction(userId, transactionId)
+
+	if err != nil {
+		return c.Status(
+			http.StatusInternalServerError).JSON(
+			models.Response{
+				Status:  http.StatusInternalServerError,
+				Message: "error",
+				Data:    err.Error(),
+			},
+		)
+	}
+
+	return c.Status(
+		http.StatusOK).JSON(
+		models.Response{
+			Status:  http.StatusOK,
+			Message: "success",
+			Data:    transaction,
+		},
+	)
+}
+
 func DeleteTransaction(c *fiber.Ctx) error {
 
 	userId := c.Params("userId")
@@ -181,6 +210,62 @@ func UpdateTransaction(c *fiber.Ctx) error {
 			Status:  http.StatusOK,
 			Message: "success",
 			Data:    &fiber.Map{"Transaction": updCnt},
+		},
+	)
+}
+
+func CalculateTotalCategory(c *fiber.Ctx) error {
+
+	userId := c.Params("userId")
+	category := c.Params("category")
+
+	total, err := S.CalculateTotalCategory(userId, category)
+
+	if err != nil {
+		return c.Status(
+			http.StatusInternalServerError).JSON(
+			models.Response{
+				Status:  http.StatusInternalServerError,
+				Message: "error",
+				Data:    err.Error(),
+			},
+		)
+	}
+
+	return c.Status(
+		http.StatusOK).JSON(
+		models.Response{
+			Status:  http.StatusOK,
+			Message: "success",
+			Data:    &fiber.Map{"Total": total},
+		},
+	)
+}
+
+func CalculateTotalSpendFrom(c *fiber.Ctx) error {
+
+	userId := c.Params("userId")
+	spendFrom := c.Params("spendFrom")
+
+	total, err := S.CalculateTotalSpendFrom(userId, spendFrom)
+
+	if err != nil {
+		return c.Status(
+			http.StatusInternalServerError).JSON(
+			models.Response{
+				Status:  http.StatusInternalServerError,
+				Message: "error",
+				Data:    err.Error(),
+			},
+		)
+	}
+
+	return c.Status(
+		http.StatusOK).JSON(
+		models.Response{
+			Status:  http.StatusOK,
+			Message: "success",
+			Data:    &fiber.Map{"Total": total},
 		},
 	)
 }

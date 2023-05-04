@@ -66,6 +66,48 @@ func GetTransactions(userId string) ([]models.Transaction, error) {
 	return transactions, nil
 }
 
+// not an endpoint
+func GetTransaction(userId string, transactionId string) (*models.Transaction, error) {
+	dbCtx := context.Background()
+
+	priTransactionId, err := primitive.ObjectIDFromHex(transactionId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// check if user exists
+	_, err = GetUser(userId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// check if transaction exists on user model transactions array
+	found := userCollection.FindOne(dbCtx, bson.M{"transactions": priTransactionId})
+
+	if found.Err() != nil {
+		return nil, found.Err()
+	}
+
+	// get transaction from transaction collection
+	found = transactionCollection.FindOne(dbCtx, bson.M{"id": priTransactionId})
+
+	if found.Err() != nil {
+		return nil, found.Err()
+	}
+
+	var transaction models.Transaction
+
+	err = found.Decode(&transaction)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &transaction, nil
+}
+
 func DeleteTransaction(userId string, transactionId string) (int64, error) {
 	dbCtx := context.Background()
 
@@ -106,7 +148,6 @@ func DeleteTransaction(userId string, transactionId string) (int64, error) {
 	return res.DeletedCount, nil
 }
 
-// TODO: patch transaction
 func UpdateTransaction(userId string, transactionId string, transaction *models.Transaction) (*models.Transaction, error) {
 	dbCtx := context.Background()
 
@@ -176,4 +217,82 @@ func UpdateTransaction(userId string, transactionId string, transaction *models.
 	}
 
 	return &foundTrx, nil
+}
+
+// CalculateTotalCategory returns the total amount of money spent in a category
+func CalculateTotalCategory(userId string, category string) (int32, error) {
+	dbCtx := context.Background()
+
+	priUserId, err := primitive.ObjectIDFromHex(userId)
+
+	if err != nil {
+		return 0, err
+	}
+
+	// check if user exists
+	_, err = GetUser(userId)
+
+	if err != nil {
+		return 0, err
+	}
+
+	// get all transactions that have the user's id
+	cursor, err := transactionCollection.Find(dbCtx, bson.M{"userid": priUserId, "category": category})
+
+	if err != nil {
+		return 0, err
+	}
+
+	var transactions []models.Transaction
+
+	if err = cursor.All(dbCtx, &transactions); err != nil {
+		return 0, err
+	}
+
+	var total int32
+
+	for _, transaction := range transactions {
+		total += transaction.Amount
+	}
+
+	return total, nil
+}
+
+// CalculateTotalSpendFrom returns the total amount of money spent from a spendFrom
+func CalculateTotalSpendFrom(userId string, spendFrom string) (int32, error) {
+	dbCtx := context.Background()
+
+	priUserId, err := primitive.ObjectIDFromHex(userId)
+
+	if err != nil {
+		return 0, err
+	}
+
+	// check if user exists
+	_, err = GetUser(userId)
+
+	if err != nil {
+		return 0, err
+	}
+
+	// get all transactions that have the user's id
+	cursor, err := transactionCollection.Find(dbCtx, bson.M{"userid": priUserId, "spendfrom": spendFrom})
+
+	if err != nil {
+		return 0, err
+	}
+
+	var transactions []models.Transaction
+
+	if err = cursor.All(dbCtx, &transactions); err != nil {
+		return 0, err
+	}
+
+	var total int32
+
+	for _, transaction := range transactions {
+		total += transaction.Amount
+	}
+
+	return total, nil
 }
