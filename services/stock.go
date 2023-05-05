@@ -17,7 +17,7 @@ func AddStock(userId string, stock *models.Stock) (*models.Stock, error) {
 		return nil, err
 	}
 	// check if stock already exists on user model stocks array
-	res := userCollection.FindOne(dbCtx, bson.M{"stocks.id": stock.Id})
+	res := userCollection.FindOne(dbCtx, bson.M{"id": user.Id, "stocks.id": stock.Id})
 
 	if res.Err() == nil {
 		return nil, errors.New("Stock already exists")
