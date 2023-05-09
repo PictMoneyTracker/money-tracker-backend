@@ -2,14 +2,15 @@ package routes
 
 import (
 	"money-tracker/controllers"
+	"money-tracker/middleware"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func StockRoute(app *fiber.App) {
-	app.Post("/stock/:userId", controllers.AddStock)
+func StockRoute(router fiber.Router) {
+	router.Post("/:userId", middleware.AuthenticateUser, controllers.AddStock)
 
-	app.Get("/stock/:userId", controllers.GetStocks)
+	router.Get("/:userId", middleware.AuthenticateUser, controllers.GetStocks)
 
-	app.Delete("/stock/:userId/:stockId", controllers.DeleteStock)
+	router.Delete("/:userId/:stockId", middleware.AuthenticateUser, controllers.DeleteStock)
 }
