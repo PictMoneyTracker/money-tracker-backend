@@ -12,4 +12,7 @@ func UserRoute(app *fiber.App) {
 	app.Get("/user/:userId", controllers.GetUser)
 
 	app.Patch("/user/:userId", controllers.UpdateUser)
+
+	app.Get("/login/:provider", controllers.HandleLogin)
+	app.Get("/auth/callback/:provider", controllers.HandleAuth)
 }
