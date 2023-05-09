@@ -32,6 +32,22 @@ func CreateUser(user *models.User) (*models.User, error) {
 	return user, nil
 }
 
+func GetUserByEmail(email string) (*models.User, error) {
+	dbCtx := context.Background()
+
+	res := userCollection.FindOne(dbCtx, bson.M{"email": email})
+	if res.Err() != nil {
+		return nil, res.Err()
+	}
+
+	var user models.User
+	if err := res.Decode(&user); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func GetUser(userId string) (*models.User, error) {
 	dbCtx := context.Background()
 
@@ -45,7 +61,6 @@ func GetUser(userId string) (*models.User, error) {
 	return &user, nil
 }
 
-// todo: update user
 func UpdateUser(userId string, user *models.User) (int64, error) {
 	dbCtx := context.Background()
 

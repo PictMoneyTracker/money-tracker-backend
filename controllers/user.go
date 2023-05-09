@@ -3,8 +3,11 @@ package controllers
 import (
 	"money-tracker/models"
 	S "money-tracker/services"
+	U "money-tracker/utils"
 
 	"net/http"
+
+	"github.com/shareed2k/goth_fiber"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -40,15 +43,55 @@ func CreateUser(c *fiber.Ctx) error {
 
 	user.Id = primitive.NewObjectID()
 
-	newUser, e := S.CreateUser(&user)
+	signedToken, err := U.GetJwtToken(&user)
 
-	if e != nil {
+	if err != nil {
 		return c.Status(
 			http.StatusInternalServerError).JSON(
 			models.Response{
 				Status:  http.StatusInternalServerError,
 				Message: "error",
-				Data:    e.Error(),
+				Data:    err.Error(),
+			},
+		)
+	}
+
+	c.Set("Authorization", signedToken)
+
+	// check if user already exists
+	if existingUser, err := S.GetUserByEmail(user.Email); existingUser != nil {
+		if err == nil {
+			return c.Status(
+				http.StatusOK).JSON(
+				models.Response{
+					Status:  http.StatusOK,
+					Message: "success",
+					Data:    &fiber.Map{"id": existingUser.Id},
+				},
+			)
+		}
+	}
+
+	newUser, err := S.CreateUser(&user)
+
+	if err != nil {
+		return c.Status(
+			http.StatusInternalServerError).JSON(
+			models.Response{
+				Status:  http.StatusInternalServerError,
+				Message: "error",
+				Data:    err.Error(),
+			},
+		)
+	}
+
+	if err != nil {
+		return c.Status(
+			http.StatusInternalServerError).JSON(
+			models.Response{
+				Status:  http.StatusInternalServerError,
+				Message: "error",
+				Data:    err.Error(),
 			},
 		)
 	}
@@ -58,7 +101,7 @@ func CreateUser(c *fiber.Ctx) error {
 		models.Response{
 			Status:  http.StatusCreated,
 			Message: "success",
-			Data:    &fiber.Map{"Id": newUser.Id},
+			Data:    &fiber.Map{"id": newUser.Id},
 		},
 	)
 }
@@ -138,4 +181,93 @@ func UpdateUser(c *fiber.Ctx) error {
 			Data:    &fiber.Map{"count": modifiedCount},
 		},
 	)
+}
+
+// google auth callback for web platform
+func HandleAuth(c *fiber.Ctx) error {
+
+	user, err := goth_fiber.CompleteUserAuth(c)
+
+	if err != nil {
+		return c.Status(
+			http.StatusInternalServerError).JSON(
+			models.Response{
+				Status:  http.StatusInternalServerError,
+				Message: "error",
+				Data:    err.Error(),
+			},
+		)
+	}
+
+	// Create a new user with the required properties
+	newUser := models.User{
+		Id:       primitive.NewObjectID(),
+		Email:    user.Email,
+		Name:     user.Name,
+		PhotoUrl: user.AvatarURL,
+	}
+
+	signedToken, err := U.GetJwtToken(&newUser)
+
+	if err != nil {
+		return c.Status(
+			http.StatusInternalServerError).JSON(
+			models.Response{
+				Status:  http.StatusInternalServerError,
+				Message: "error",
+				Data:    err.Error(),
+			},
+		)
+	}
+
+	c.Set("Authorization", signedToken)
+
+	// check if user already exists
+	if existingUser, err := S.GetUserByEmail(user.Email); existingUser != nil {
+
+		if err == nil {
+
+			return c.Status(
+				http.StatusOK).JSON(
+				models.Response{
+					Status:  http.StatusOK,
+					Message: "success",
+					Data:    &fiber.Map{"user": existingUser},
+				},
+			)
+		}
+	}
+
+	// Insert the user into the database
+	newUserDb, err := S.CreateUser(&newUser)
+
+	if err != nil {
+		return c.Status(
+			http.StatusInternalServerError).JSON(
+			models.Response{
+				Status:  http.StatusInternalServerError,
+				Message: "error",
+				Data:    err.Error(),
+			},
+		)
+	}
+
+	return c.Status(
+		http.StatusOK).JSON(
+		models.Response{
+			Status:  http.StatusOK,
+			Message: "success",
+			Data:    &fiber.Map{"newUser": newUserDb},
+		},
+	)
+
+}
+
+func HandleLogin(ctx *fiber.Ctx) error {
+	err := goth_fiber.BeginAuthHandler(ctx)
+
+	if err != nil {
+		return err
+	}
+	return nil
 }

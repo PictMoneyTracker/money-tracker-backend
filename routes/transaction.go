@@ -2,22 +2,23 @@ package routes
 
 import (
 	"money-tracker/controllers"
+	"money-tracker/middleware"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func TransactionRoute(app *fiber.App) {
-	app.Post("/transaction/:userId", controllers.AddTransaction)
+func TransactionRoute(router fiber.Router) {
+	router.Post("/:userId", middleware.AuthenticateUser,controllers.AddTransaction)
 
-	app.Get("/transaction/:userId", controllers.GetTransactions)
+	router.Get("/:userId", middleware.AuthenticateUser,controllers.GetTransactions)
 
-	app.Delete("/transaction/:userId/:transactionId", controllers.DeleteTransaction)
+	router.Delete("/:userId/:transactionId", middleware.AuthenticateUser,controllers.DeleteTransaction)
 
-	app.Patch("/transaction/:userId/:transactionId", controllers.UpdateTransaction)
+	router.Patch("/:userId/:transactionId", middleware.AuthenticateUser,controllers.UpdateTransaction)
 
-	app.Get("/transaction/:userId/:transactionId", controllers.GetTransaction)
+	router.Get("/:userId/:transactionId", middleware.AuthenticateUser,controllers.GetTransaction)
 
-	app.Get("/transaction/:userId/categoryTotal/:category", controllers.CalculateTotalCategory)
+	router.Get("/:userId/categoryTotal/:category", middleware.AuthenticateUser,controllers.CalculateTotalCategory)
 
-	app.Get("/transaction/:userId/spendFromTotal/:spendFrom", controllers.CalculateTotalSpendFrom)
+	router.Get("/:userId/spendFromTotal/:spendFrom", middleware.AuthenticateUser,controllers.CalculateTotalSpendFrom)
 }

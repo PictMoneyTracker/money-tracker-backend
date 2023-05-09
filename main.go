@@ -10,6 +10,7 @@ import (
 func main() {
 	app := fiber.New()
 
+	configs.SetUpAuth()
 	configs.ConnectDB()
 
 	routes.InitRoutes(app)
